@@ -1,0 +1,50 @@
+@startuml forkcast_screen_flow
+title Forkcast - screen flow
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam dpi 140
+hide empty description
+
+[*] --> Onboarding : first launch
+Onboarding --> Today : finish or skip
+[*] --> Today : later launches
+[*] --> Recovery : database cannot\nbe opened
+
+state "Weighing notification\n(app closed or locked)" as Notif
+state "Live weighing" as Live
+state "Session\n(Weigh several)" as Sess
+state "Entry edit" as Edit
+state "Food search\n(My foods, FDC, Scan)" as Search
+state "Goals" as Goals
+state "Recovery\n(Restore, Import,\nStart fresh)" as Recovery
+state "Profile\n(name, age, height,\ncurrent weight, gender)" as Profile
+state "Settings" as Settings
+state "Today" as Today : swipe or buttons for days, calendar\npinned goals on top\nBreakfast / Lunch / Dinner / Snacks\nexpandable nutrient summary
+
+Recovery --> Today
+Notif --> Live : tap (unlock)
+Today --> Live : Weigh, or placement\n(Auto-open)
+Live --> Search : pick food
+Search --> Live
+Live --> Sess : Weigh several
+Today --> Sess : Weigh several
+Live --> Today : Log (entry saved)\nor close (discarded)
+Sess --> Today : Finish (entries saved),\noptionally save as Meal / Recipe
+Today --> Edit : tap entry
+Edit --> Today : save
+Today --> Today : swipe entry = delete (Undo)
+Today --> Goals : tap pinned goals
+Goals --> Today : pin / reorder
+Today --> Profile : Profile tab
+Profile --> Settings
+Settings --> Goals : Goals
+state Settings {
+  state "Units, Theme, Meal times" as S1
+  state "Notifications and scale behavior" as S2
+  state "Scales (add, rename, forget, switch)" as S3
+  state "Food data (personal FDC key)" as S6
+  state "Backup and data\n(back up, restore, export,\nimport, delete all)" as S4
+  state "About (FDC citation,\nprivacy policy, intro)" as S5
+}
+@enduml

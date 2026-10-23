@@ -1,0 +1,32 @@
+@startsalt forkcast_today_wireframe
+skinparam dpi 140
+title Forkcast - Today screen sketch
+{+
+  { [<] | <b>Thu, Oct 22 (Today) | [>] | [Calendar] }
+  { Scale: Kitchen (on) | [Switch] | [Weigh] | [Weigh several] }
+  ==
+  { <b>Pinned goals | . | . }
+  {
+    Calories  | 1,450 / 2,200 kcal | Under
+    Protein   | 96 / 120 g         | Under
+    Sodium    | 1,900 / 2,300 mg   | Stay under: Met
+    Vitamin D | 8 / 20 mcg         | Under, partial data
+  }
+  ==
+  {
+    <b>Breakfast | . | .
+    Oats | 45 g | 171 kcal
+    Bread | 2 slices | 160 kcal
+    <b>Lunch | . | .
+    Rice | 180 g | 234 kcal
+    Chicken breast | 150 g | 248 kcal
+    <b>Dinner | . | .
+    (none yet) | . | .
+    <b>Snacks | . | .
+    Greek yogurt | 170 g | 100 kcal
+  }
+  ==
+  [All nutrients (44) v : Under / Met / Over in text and color]
+  { [Today] | [Foods] | [Profile] }
+}
+@endsalt

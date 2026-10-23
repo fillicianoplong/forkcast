@@ -1,0 +1,159 @@
+@startuml forkcast_class
+title Forkcast - class view (stored data)
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam dpi 140
+skinparam classAttributeIconSize 0
+hide circle
+skinparam ranksep 30
+skinparam nodesep 25
+
+abstract class Record {
+  id : UUID
+  createdAt : DateTime
+  updatedAt : DateTime
+  deleted : Boolean
+}
+
+class Food {
+  name : String
+  brand : String [0..1]
+  kind : FoodKind
+  fdcId : Integer [0..1]
+  barcode : String [0..1]
+  servingLabel : String [0..1]
+  servingGrams : Number [0..1]
+  nutrientsPer100g : Nutrients [0..1]
+  nutrientsPerServing : Nutrients [0..1]
+  sourceUrl : String [0..1]
+  archived : Boolean
+}
+
+class Entry {
+  time : DateTime
+  localDate : Date
+  utcOffset : Integer
+  grams : Number [0..1]
+  servings : Number [0..1]
+  slot : MealSlot
+  nutrientSnapshot : Nutrients
+}
+
+class Goal {
+  nutrient : NutrientId
+  kind : GoalKind
+  target : Number
+  min : Number [0..1]
+  max : Number [0..1]
+  pinned : Boolean
+  pinOrder : Integer
+}
+
+class Meal {
+  name : String
+}
+
+class Recipe {
+  finalGrams : Number
+}
+
+class Item {
+  grams : Number [0..1]
+  servings : Number [0..1]
+}
+
+class Scale {
+  name : String
+  adapter : String
+  deviceId : String
+  lastUsedAt : DateTime [0..1]
+}
+
+class Profile {
+  name : String [0..1]
+  age : Integer [0..1]
+  heightCm : Number [0..1]
+  weightKg : Number [0..1]
+  gender : String [0..1]
+}
+
+class Settings {
+  foodUnit : FoodUnit
+  profileUnits : ProfileUnits
+  theme : Theme
+  mealTimes : MealTimes
+  notifyWhenWeighing : Boolean
+  autoOpen : Boolean
+  stabilityWindow : Duration
+  tolerance : Number
+  minWeightGrams : Number
+  backupDestination : BackupDestination
+  backupSchedule : Schedule
+}
+
+class Nutrients <<value>> {
+  energy + 43 nutrients (SRS 9.8)
+  each : Number [0..1]
+}
+
+enum FoodKind {
+  fdc
+  custom
+  restaurant
+  recipe
+}
+
+enum GoalKind {
+  reach
+  stay_under
+}
+
+enum MealSlot {
+  breakfast
+  lunch
+  dinner
+  snacks
+}
+
+Record <|-- Food
+Record <|-- Entry
+Record <|-- Goal
+Record <|-- Meal
+Record <|-- Recipe
+Record <|-- Scale
+Record <|-- Profile
+Record <|-- Settings
+Food -[hidden]down-> Nutrients
+Nutrients -[hidden]right-> FoodKind
+FoodKind -[hidden]right-> GoalKind
+GoalKind -[hidden]right-> MealSlot
+Entry "*" --> "1" Food : food
+Entry "*" --> "0..1" Scale : weighed on
+Meal "1" *-- "*" Item
+Recipe "1" *-- "*" Item : ingredients
+Recipe "1" --> "1" Food : listed as\n(kind = recipe)
+Item "*" --> "1" Food
+
+note bottom of Entry
+  Every entry has exactly one food; a Recipe portion
+  points to the Recipe's food, and a Meal logs one entry
+  per item (FR-53, FR-57). localDate is fixed
+  when logged (FR-29). The snapshot keeps past days
+  unchanged (FR-21), except filled-in unknowns (FR-22).
+end note
+note bottom of Nutrients
+  null = unknown (not on the label);
+  0 = a real zero (FR-20).
+end note
+note left of Goal
+  No goal row = FDA Daily Value
+  default (FR-68). Limit nutrients:
+  stay_under (FR-69). min and max
+  are optional (FR-70).
+end note
+note top of Profile
+  One row, all optional, current weight only.
+  Not used for goals (FR-77).
+end note
+@enduml

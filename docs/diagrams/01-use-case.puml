@@ -1,0 +1,59 @@
+@startuml forkcast_use_case
+title Forkcast - use case view
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam dpi 140
+left to right direction
+
+actor "Phone user" as User
+actor "Paired scales\n(ESN00, 0x181D scales)" as Scale
+actor "USDA FoodData\nCentral" as FDC
+actor "Google Drive\n(user's cloud)" as Cloud
+actor "Android\n(CDM, notifications)" as OS
+
+rectangle "Forkcast (this Android phone)" {
+  usecase "UC-01 Set up on\nfirst launch" as UC01
+  usecase "UC-02 Find or\ncreate a food" as UC02
+  usecase "UC-03 Log a food\nwithout a scale" as UC03
+  usecase "UC-04 Pair a scale" as UC04
+  usecase "UC-05 Weigh and log\nwith the app open" as UC05
+  usecase "UC-06 Weigh with the app\nclosed or phone locked" as UC06
+  usecase "UC-07 Weigh several,\nsave a Meal or Recipe" as UC07
+  usecase "UC-08 Set and pin\ndaily goals" as UC08
+  usecase "UC-09 Review and\nfix a day" as UC09
+  usecase "UC-10 Adjust profile\nand settings" as UC10
+  usecase "UC-11 Back up, restore,\nand delete data" as UC11
+  usecase "Read live weight\n(active scale)" as Read
+}
+
+User --> UC01
+User --> UC02
+User --> UC03
+User --> UC04
+User --> UC05
+User --> UC06
+User --> UC07
+User --> UC08
+User --> UC09
+User --> UC10
+User --> UC11
+UC04 .> UC01 : <<extend>>
+UC04 -- Scale
+UC05 ..> Read : <<include>>
+UC07 ..> Read : <<include>>
+UC06 ..> UC05 : opens live\nweighing
+UC03 ..> UC02 : <<include>>
+UC05 ..> UC02 : <<include>>
+UC06 -- OS
+Read -- Scale
+UC02 -- FDC
+UC11 -- Cloud
+
+note bottom of Read
+  A weight is saved only when the user
+  taps Log with the app open (FR-25).
+  App closed: notification only (FR-42).
+  No account or sign-in (FR-04).
+end note
+@enduml

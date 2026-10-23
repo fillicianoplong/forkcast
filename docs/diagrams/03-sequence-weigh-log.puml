@@ -1,0 +1,48 @@
+@startuml forkcast_sequence_log
+title Forkcast - weigh and log with the app open
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam dpi 140
+autonumber
+
+participant "Active scale" as Scale
+participant ScaleLink as Link
+participant "ScaleAdapter\n(ESN00 or WSS)" as Adapter
+participant ScaleManager as Manager
+participant WeighSession as Session
+participant Screens
+participant Repositories as Repo
+actor "Phone user" as User
+
+Scale -> Link : measurement packets
+Link -> Adapter : parse(bytes)
+Adapter --> Manager : Reading(grams, stable)
+Manager --> Session : reading from active scale\n(most recent if several on, FR-34)
+Session -> Screens : placement: open Live weighing (Auto-open)\nand update grams (NFR-13)
+User -> Screens : pick food (grams or servings)
+alt scale disconnects before Log
+  Link --> Session : disconnected
+  Session --> Screens : show disconnected,\noffer typed grams
+else stable reading, or grams typed
+  Screens --> User : Log enabled (FR-40)
+  User -> Screens : Log
+  Screens -> Repo : insert entry + nutrient snapshot\n(one transaction, target 1 s, NFR-01)
+  alt write fails
+    Repo --> Screens : error (retried once)
+    Screens --> User : show error, keep grams and food
+  else written
+    Repo --> Screens : entry id
+    Screens --> User : Today and pinned goals update
+  end
+end
+opt user closes without logging
+  Screens --> User : ask, then discard (nothing saved)
+end
+
+legend bottom
+  Typed grams, servings, and each item of a Weigh several session
+  use the same Log transaction. Unknown nutrient values stay null;
+  totals count them as 0 and mark the goal partial (FR-20, FR-72).
+endlegend
+@enduml

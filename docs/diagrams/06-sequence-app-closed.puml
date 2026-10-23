@@ -1,0 +1,46 @@
+@startuml forkcast_sequence_closed
+title Forkcast - weighing with the app closed (Android)
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam dpi 140
+autonumber
+
+participant "Paired scale" as Scale
+participant "Android CDM" as Cdm
+participant "PresenceService\n(Kotlin, foreground service)" as Presence
+participant "PlacementDetector\n(Kotlin, per adapter)" as Detector
+participant "OS notifications" as Notif
+participant "Screens +\nScaleLink (JS)" as App
+actor "Phone user" as User
+
+User -> Scale : turn on
+Scale -> Cdm : advertises
+Cdm -> Presence : device appeared (wakes service)
+Presence -> Presence : start connectedDevice service\n(persistent notification)
+Presence -> Scale : connect (Android BLE API)
+Scale -> Presence : measurement packets
+Presence -> Detector : grams + stable flag
+Detector -> Detector : placement rule\n(min weight held, SRS 9.4)
+Detector --> Presence : placement started
+Presence -> Notif : post once per placement
+Notif --> User : "Something is being weighed"
+alt user taps the notification
+  User -> App : tap (unlock if locked)
+  App -> Presence : take over
+  Presence -> Scale : disconnect
+  App -> Scale : connect with react-native-ble-plx
+  App --> User : Live weighing with the live weight,\ncontinue as in UC-05
+else notification ignored
+  Presence -> Presence : nothing saved (FR-42)
+end
+Scale -> Scale : auto-off
+Cdm -> Presence : device disappeared / disconnected
+Presence -> Presence : stop service, remove\nnotification (NFR-19)
+
+legend bottom
+  No JavaScript runs and nothing is written while the app is closed (FR-44, NFR-02).
+  Best effort: verify CDM presence on Filliciano's phone and Android version.
+  If unavailable, Settings says so and weighing works with the app open (FR-47).
+endlegend
+@enduml

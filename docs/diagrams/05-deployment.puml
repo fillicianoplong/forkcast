@@ -1,0 +1,50 @@
+@startuml forkcast_deployment
+title Forkcast - deployment view (Android first)
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam dpi 140
+left to right direction
+
+node "User's Android phone (Android 12+, minSdk 31, targetSdk 36)" as Phone {
+  node "Forkcast app\n(Expo development build)" as App {
+    artifact "JavaScript bundle\n(screens, WeighSession,\nGoalEngine, Repositories)" as JS
+    artifact "Native modules:\nreact-native-ble-plx,\nexpo-sqlite (SQLCipher),\ncloud storage, camera,\nnotifications, secure store" as Native
+    artifact "PresenceService: connectedDevice\nforeground service (Kotlin, BLE,\nPlacementDetector; only while\na scale is on)" as FGS
+  }
+  database "forkcast.db\n(encrypted SQLite,\nexcluded from Auto Backup)" as DB
+  node "OS services" as OS {
+    artifact "Companion Device\nManager" as CDM
+    artifact "Bluetooth stack" as BT
+    artifact "Android Keystore" as Keys
+    artifact "Notifications" as Notif
+  }
+}
+
+node "Etekcity ESN00\n(vendor service 0x1910,\nto verify with nRF Connect)" as Esn
+node "Other scales\n(Weight Scale Service 0x181D,\nor future adapters)" as Wss
+
+cloud "Public services" as Net {
+  node "USDA FDC API\n(api.nal.usda.gov)" as Fdc
+  folder "Google Drive\napp data folder" as Drive
+}
+
+cloud "App server" as NoServer {
+  artifact "None"
+}
+
+App --> DB : read / write\n(app open only)
+CDM --> FGS : scale appeared:\nstart service
+App --> OS : BLE, keys,\nnotifications
+BT -- Esn : BLE
+BT -- Wss : BLE
+App --> Fdc : HTTPS: query or barcode + key
+App --> Drive : backup file (drive.appdata)
+App ..> NoServer : no user data held\non any server
+
+legend bottom
+  Manual export and import use the share sheet to any destination.
+  iOS is a later option and is not deployed.
+  Background weighing is best effort and must be verified on the test phone.
+endlegend
+@enduml

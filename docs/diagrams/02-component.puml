@@ -1,0 +1,67 @@
+@startuml forkcast_component
+title Forkcast - component view
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam dpi 140
+skinparam componentStyle rectangle
+skinparam ranksep 40
+skinparam nodesep 30
+
+package "Forkcast app (React Native, Expo dev build, Android)" {
+  [Screens\n(Onboarding, Today, Foods, Goals,\nLive weighing, Session,\nProfile, Settings)] as Screens
+  [WeighSession] as Session
+  [ScaleManager\n(active scale)] as Manager
+  [ScaleLink\n(react-native-ble-plx)] as Link
+  interface "ScaleAdapter" as IAdapter
+  [Esn00Adapter\n(0x1910, to verify)] as Esn00
+  [WssAdapter\n(0x181D)] as Wss
+  [FoodLookup] as Lookup
+  interface "FoodSource" as ISource
+  [FdcSource] as Fdc
+  [Nutrition + GoalEngine\n(plain TypeScript)] as Nutrition
+  [Repositories] as Repo
+  [Database\n(expo-sqlite + SQLCipher)] as DB
+  [BackupService] as Backup
+  [PresenceService\n(Kotlin: CDM, foreground\nservice, BLE, PlacementDetector)] as Presence
+}
+
+[Paired scales] as Scale <<external>>
+[Android CDM] as Cdm <<external>>
+[USDA FDC API] as FdcApi <<external>>
+[Drive app data folder /\nshare sheet] as Cloud <<external>>
+[OS notifications] as OsNotif <<external>>
+[Android Keystore] as Keys <<external>>
+
+Cdm --> Presence : scale appeared /\ndisappeared
+Presence --> Scale : BLE (app closed)
+Presence --> OsNotif : placement:\n"Something is being weighed"
+OsNotif ..> Screens : tap opens\nLive weighing
+Presence ..> Link : releases the scale\nwhen the app opens
+Link --> Scale : BLE notify / write\n(app open)
+Link -right-> IAdapter : raw packets
+Esn00 -- IAdapter
+Wss -- IAdapter
+IAdapter --> Manager : grams + stable flag
+Manager --> Session : readings from\nactive scale
+Session --> Screens : live weight
+Screens --> Repo : Log, edit, delete
+Screens --> Lookup : search / barcode
+Lookup --> Repo : My foods first, cache
+Lookup --> ISource
+Fdc -- ISource
+Fdc --> FdcApi : HTTPS, query + key
+Fdc --> Keys : personal key\n(secure store)
+Screens --> Nutrition : scale nutrients,\ncheck goals
+Repo --> DB
+DB --> Keys : database key
+Backup --> Repo : export / restore
+Backup --> Cloud : backup file
+
+legend bottom
+  Only Repositories touch the Database (NFR-36). WeighSession never writes:
+  an entry is saved only when Screens calls Log (FR-25, FR-42).
+  With the app closed, only PresenceService runs; no JavaScript (FR-44).
+  No app server. Data leaves the phone only to FDC and the user's backup destination.
+endlegend
+@enduml
